@@ -1,0 +1,6 @@
+{
+  "name": "Unilabs Oracle Fusion HCM - New Joiner Journey Demo",
+  "description": "A single-page, multi-tab web application that simulates the Unilabs Front-Line New Joiner Journey demo (Offer Acceptance → Onboarding → Month 1 Support).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
