@@ -245,8 +245,8 @@ export function HiringTeamTab() {
                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                               {Object.entries(c.preOnboardingDocs || {}).map(([docId, doc]: any) => (
                                 <div key={docId} className="flex flex-col bg-gray-50 border border-gray-200 rounded-lg p-3">
-                                   <div className="flex justify-between items-start mb-2 gap-2 h-10">
-                                      <span className="text-[11px] font-semibold uppercase text-gray-700 leading-tight">{doc.label}</span>
+                                   <div className="flex justify-between items-start mb-2 gap-2 min-h-[2.5rem]">
+                                      <span className="text-[11px] font-semibold uppercase text-gray-700 leading-tight break-words line-clamp-3 overflow-hidden">{doc.label}</span>
                                       <span className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap shrink-0 ${doc.status === 'Uploaded' ? 'bg-green-100 text-green-700' : doc.status === 'Needs Review' ? 'bg-yellow-100 text-yellow-800' : doc.status === 'Rejected' ? 'bg-red-100 text-red-700' : 'bg-gray-200 text-gray-600'}`}>
                                         {doc.status}
                                       </span>

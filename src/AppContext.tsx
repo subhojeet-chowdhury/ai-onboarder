@@ -54,7 +54,12 @@ const INITIAL_STATE: AppState = {
       },
       offerAcceptedAt: null,
       signatureMeta: null,
-      preOnboardingDocs: {},
+      preOnboardingDocs: {
+        medical: { status: 'Pending', label: 'Gesundheitszeugnis' },
+        uniform: { status: 'Pending', label: 'Sicherheitsunterweisung' },
+        badge: { status: 'Pending', label: 'Ausweisfoto' },
+        iban: { status: 'Pending', label: 'Bankverbindung' },
+      },
       postOnboardingTasks: {},
       documentVerified: false,
       badgeApproved: false,
@@ -297,7 +302,7 @@ function reducer(state: AppState, action: Action): AppState {
         newState.activityLog = logEvent(newState, 'Oracle Localization AI', 'Amélie routed to FR track: CDI generated, CSE notified.');
       }
       if (newState.candidates.stefan.status === 'Background Check') {
-        newState.candidates.stefan.status = 'Contract Generated';
+        newState.candidates.stefan.status = 'Pending Council';
         newState.councilQueue.de.push({ id: 'de-req-1', candidateId: 'stefan', status: 'Pending' });
         newState.activityLog = logEvent(newState, 'Oracle Localization AI', 'Stefan routed to DE track: Blocked for Betriebsrat clearance.');
       }
