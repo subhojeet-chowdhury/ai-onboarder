@@ -118,7 +118,16 @@ export function ManagerTab() {
           >
             <div className="flex items-center gap-4">
               <div className="bg-blue-50 w-16 h-16 rounded-full overflow-hidden flex items-center justify-center border-2 border-blue-200">
-                <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=256&h=256&auto=format&fit=crop" alt="Amélie" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                <img 
+                  src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=256&h=256&auto=format&fit=crop" 
+                  alt="Amélie" 
+                  className="w-full h-full object-cover" 
+                  referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23e2e8f0'/%3E%3Ctext x='50' y='50' font-family='sans-serif' font-size='40' fill='%2364748b' text-anchor='middle' dy='.3em'%3EAL%3C/text%3E%3C/svg%3E";
+                  }}
+                />
               </div>
               <div>
                  <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">

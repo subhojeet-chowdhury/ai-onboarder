@@ -11,7 +11,18 @@ export const getDummyDocText = (label: string) => {
 
       return (
           <div className="w-48 h-48 bg-gray-200 rounded-full border-4 border-gray-300 shadow-inner flex items-center justify-center overflow-hidden mx-auto my-12">
-             <img src={imgSrc} alt="Profile" className="w-full h-full object-cover" />
+             <img 
+               src={imgSrc} 
+               alt="Profile" 
+               className="w-full h-full object-cover" 
+               referrerPolicy="no-referrer"
+               onError={(e) => {
+                 e.currentTarget.onerror = null;
+                 e.currentTarget.src = isGerman 
+                    ? "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23e2e8f0'/%3E%3Ctext x='50' y='50' font-family='sans-serif' font-size='40' fill='%2364748b' text-anchor='middle' dy='.3em'%3ESM%3C/text%3E%3C/svg%3E" 
+                    : "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23e2e8f0'/%3E%3Ctext x='50' y='50' font-family='sans-serif' font-size='40' fill='%2364748b' text-anchor='middle' dy='.3em'%3EAL%3C/text%3E%3C/svg%3E";
+               }}
+             />
           </div>
       );
   }
