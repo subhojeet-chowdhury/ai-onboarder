@@ -114,7 +114,7 @@ export function ManagerTab() {
           >
             <div className="flex items-center gap-4">
               <div className="bg-blue-50 w-16 h-16 rounded-full overflow-hidden flex items-center justify-center border-2 border-blue-200">
-                 <img src="https://i.pravatar.cc/150?u=a042581f4e29" alt="Amélie" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                 <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Amélie" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
               </div>
               <div>
                  <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">

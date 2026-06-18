@@ -19,6 +19,7 @@ import {
   BookOpen,
   Bell,
   User,
+  Info,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -37,6 +38,7 @@ export function AmelieTab() {
   const [showCDIModal, setShowCDIModal] = useState(false);
   const [showTicketForm, setShowTicketForm] = useState(false);
   const [ticketDesc, setTicketDesc] = useState("");
+  const [activeTab, setActiveTab] = useState<'home' | 'notifs' | 'learning' | 'profile'>('home');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -229,8 +231,10 @@ export function AmelieTab() {
       {c.isAuthenticated && (
         <div className="flex flex-col min-h-[100%] w-full relative">
           <div className="p-4 flex flex-col gap-4 pb-8 flex-1">
-            {/* State: Pending Offer */}
-            {c.status === "Pending" && (
+            {activeTab === 'home' ? (
+              <>
+                {/* State: Pending Offer */}
+                {c.status === "Pending" && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -533,6 +537,38 @@ export function AmelieTab() {
                   )}
                 </AnimatePresence>
               </motion.div>
+            )}
+            </>
+            ) : activeTab === 'notifs' ? (
+              <div className="flex-1 overflow-y-auto">
+                 <h2 className="text-xl font-bold text-gray-800 mb-6 mt-2">Notifications</h2>
+                 {state.tickets.filter(t => t.candidateId === 'amelie' && t.status === 'Closed').map(t => (
+                    <div key={t.id} className="mb-3 bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex gap-3 items-start">
+                       <div className="bg-green-100 p-2 rounded-full shrink-0">
+                          <CheckCircle2 size={16} className="text-green-600" />
+                       </div>
+                       <div>
+                          <p className="text-sm font-semibold text-gray-800 mb-1">Ticket Résolu : {t.category}</p>
+                          <p className="text-xs text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-100 mt-2 italic leading-relaxed">
+                             "Bonjour Amélie, les primes de nuit coupent le 25 du mois. Les heures ultérieures seront payées le mois prochain. Cordialement."
+                          </p>
+                          <p className="text-[10px] text-gray-400 mt-2 font-medium">Spécialiste HR (Global Service Center)</p>
+                       </div>
+                    </div>
+                 ))}
+                 {state.tickets.filter(t => t.candidateId === 'amelie' && t.status === 'Closed').length === 0 && (
+                    <div className="text-center text-gray-400 py-12 flex flex-col items-center">
+                       <div className="bg-gray-50 p-4 rounded-full mb-3">
+                         <Bell size={24} className="text-gray-300" />
+                       </div>
+                       <div className="text-sm">Aucune notification</div>
+                    </div>
+                 )}
+              </div>
+            ) : (
+                <div className="flex-1 flex items-center justify-center text-gray-400 text-sm">
+                   Contenu non disponible.
+                </div>
             )}
           </div>
 
@@ -954,20 +990,22 @@ export function AmelieTab() {
 
           {/* Bottom Tabs */}
           <div className="sticky bottom-0 w-full bg-white border-t border-gray-200 px-6 py-3 pb-6 flex justify-between items-center text-[10px] font-medium text-gray-400 z-40 mt-auto shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-             <div className="flex flex-col items-center gap-1 text-[#C74634]">
+             <div onClick={() => setActiveTab('home')} className={`flex flex-col items-center gap-1 transition cursor-pointer ${activeTab === 'home' ? 'text-[#C74634]' : 'hover:text-gray-800'}`}>
                 <Home size={22} className="mb-0.5" />
                 <span>Accueil</span>
              </div>
-             <div className="flex flex-col items-center gap-1 hover:text-gray-800 transition cursor-pointer">
+             <div onClick={() => setActiveTab('learning')} className={`flex flex-col items-center gap-1 transition cursor-pointer ${activeTab === 'learning' ? 'text-[#C74634]' : 'hover:text-gray-800'}`}>
                 <BookOpen size={22} className="mb-0.5" />
                 <span>Formation</span>
              </div>
-             <div className="flex flex-col items-center gap-1 hover:text-gray-800 transition cursor-pointer relative">
-                <div className="absolute top-0 right-1 w-2 h-2 bg-red-500 rounded-full border border-white"></div>
+             <div onClick={() => setActiveTab('notifs')} className={`flex flex-col items-center gap-1 transition cursor-pointer relative ${activeTab === 'notifs' ? 'text-[#C74634]' : 'hover:text-gray-800'}`}>
+                {state.tickets.some(t => t.candidateId === 'amelie' && t.status === 'Closed') && (
+                   <div className="absolute top-0 right-1 w-2 h-2 bg-red-500 rounded-full border border-white"></div>
+                )}
                 <Bell size={22} className="mb-0.5" />
                 <span>Notifs</span>
              </div>
-             <div className="flex flex-col items-center gap-1 hover:text-gray-800 transition cursor-pointer">
+             <div onClick={() => setActiveTab('profile')} className={`flex flex-col items-center gap-1 transition cursor-pointer ${activeTab === 'profile' ? 'text-[#C74634]' : 'hover:text-gray-800'}`}>
                 <User size={22} className="mb-0.5" />
                 <span>Profil</span>
              </div>
