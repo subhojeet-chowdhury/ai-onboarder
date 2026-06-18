@@ -19,11 +19,17 @@ const INITIAL_STATE: AppState = {
       },
       offerAcceptedAt: null,
       signatureMeta: null,
-      onboardingTasks: [
-        { id: 't1', label: 'Review and sign Lab Uniform & Safety Policy', status: 'Pending' },
-        { id: 't2', label: 'Upload a photo for cleanroom access badge', status: 'Pending' },
-        { id: 't3', label: 'Complete Biohazard Level 2 Handling video module', status: 'Pending' },
-      ],
+      preOnboardingDocs: {
+        medical: { status: 'Pending', label: "Certificat médical d'aptitude" },
+        uniform: { status: 'Pending', label: 'Politique de sécurité et uniforme' },
+        badge: { status: 'Pending', label: 'Photo pour Badge' },
+        iban: { status: 'Pending', label: 'RIB / IBAN' },
+        rules: { status: 'Pending', label: 'Règlement Intérieur' },
+      },
+      postOnboardingTasks: {
+        biohazard: { status: 'Pending', label: 'Module vidéo Biohazard L2', type: 'video' },
+        values: { status: 'Pending', label: 'Introduction aux Valeurs Unilabs', type: 'document' },
+      },
       documentVerified: false,
       badgeApproved: false,
       day1Activated: false,
@@ -32,6 +38,7 @@ const INITIAL_STATE: AppState = {
       uniformSigned: false,
       videoWatched: false,
       photoUploaded: false,
+      contractSigned: false,
     },
     stefan: {
       id: 'stefan',
@@ -47,7 +54,8 @@ const INITIAL_STATE: AppState = {
       },
       offerAcceptedAt: null,
       signatureMeta: null,
-      onboardingTasks: [],
+      preOnboardingDocs: {},
+      postOnboardingTasks: {},
       documentVerified: false,
       badgeApproved: false,
       day1Activated: false,
@@ -56,6 +64,7 @@ const INITIAL_STATE: AppState = {
       uniformSigned: false,
       videoWatched: false,
       photoUploaded: false,
+      contractSigned: false,
     },
   },
   councilQueue: { de: [] },
@@ -71,7 +80,12 @@ type Action =
   | { type: 'SET_TAB'; payload: string }
   | { type: 'LOGIN'; payload: { candidateId: CandidateId } }
   | { type: 'ACCEPT_OFFER'; payload: { candidateId: CandidateId } }
+  | { type: 'UPLOAD_PRE_DOC'; payload: { candidateId: CandidateId; docId: string } }
+  | { type: 'REJECT_PRE_DOC'; payload: { candidateId: CandidateId; docId: string } }
+  | { type: 'COMPLETE_POST_TASK'; payload: { candidateId: CandidateId; taskId: string } }
+  | { type: 'SET_STATUS'; payload: { candidateId: CandidateId; status: any } }
   | { type: 'TRIGGER_LOCALIZATION' }
+  | { type: 'SIGN_CONTRACT'; payload: { candidateId: CandidateId } }
   | { type: 'APPROVE_COUNCIL'; payload: { candidateId: CandidateId } }
   | { type: 'REJECT_TICKET'; payload: { candidateId: CandidateId } } // optional
   | { type: 'SIGN_UNIFORM'; payload: { candidateId: CandidateId } }
@@ -145,14 +159,108 @@ function reducer(state: AppState, action: Action): AppState {
       };
     }
 
+    case 'UPLOAD_PRE_DOC': {
+      const { candidateId, docId } = action.payload;
+      return {
+        ...state,
+        candidates: {
+          ...state.candidates,
+          [candidateId]: {
+            ...state.candidates[candidateId],
+            preOnboardingDocs: {
+              ...state.candidates[candidateId].preOnboardingDocs,
+              [docId]: {
+                ...state.candidates[candidateId].preOnboardingDocs[docId],
+                status: 'Uploaded'
+              }
+            }
+          }
+        },
+        activityLog: logEvent(state, state.candidates[candidateId].name, `Uploaded document: ${docId}`),
+      };
+    }
+
+    case 'REJECT_PRE_DOC': {
+      const { candidateId, docId } = action.payload;
+      return {
+        ...state,
+        candidates: {
+          ...state.candidates,
+          [candidateId]: {
+            ...state.candidates[candidateId],
+            preOnboardingDocs: {
+              ...state.candidates[candidateId].preOnboardingDocs,
+              [docId]: {
+                ...state.candidates[candidateId].preOnboardingDocs[docId],
+                status: 'Rejected'
+              }
+            }
+          }
+        },
+        activityLog: logEvent(state, 'Hiring Team', `Rejected document: ${docId} for ${state.candidates[candidateId].name}`),
+      };
+    }
+
+    case 'COMPLETE_POST_TASK': {
+      const { candidateId, taskId } = action.payload;
+      return {
+        ...state,
+        candidates: {
+          ...state.candidates,
+          [candidateId]: {
+            ...state.candidates[candidateId],
+            postOnboardingTasks: {
+              ...state.candidates[candidateId].postOnboardingTasks,
+              [taskId]: {
+                ...state.candidates[candidateId].postOnboardingTasks[taskId],
+                status: 'Completed'
+              }
+            }
+          }
+        },
+        activityLog: logEvent(state, state.candidates[candidateId].name, `Post-onboarding Task Completed: ${taskId}`),
+      };
+    }
+
+    case 'SET_STATUS': {
+      const { candidateId, status } = action.payload;
+      return {
+        ...state,
+        candidates: {
+          ...state.candidates,
+          [candidateId]: {
+            ...state.candidates[candidateId],
+            status,
+          }
+        },
+        activityLog: logEvent(state, 'System', `Status updated to ${status} for ${state.candidates[candidateId].name}`),
+      };
+    }
+
+    case 'SIGN_CONTRACT': {
+      const { candidateId } = action.payload;
+      return {
+        ...state,
+        candidates: {
+          ...state.candidates,
+          [candidateId]: {
+            ...state.candidates[candidateId],
+            contractSigned: true,
+            status: 'Cleared'
+          }
+        },
+        activityLog: logEvent(state, state.candidates[candidateId].name, `Signed Contract`),
+      };
+    }
+
     case 'TRIGGER_LOCALIZATION': {
       let newState = { ...state };
-      if (newState.candidates.amelie.status === 'Offer Accepted') {
-        newState.candidates.amelie.status = 'Cleared';
+      if (newState.candidates.amelie.status === 'Background Check') {
+        newState.candidates.amelie.status = 'Contract Generated';
         newState.activityLog = logEvent(newState, 'Oracle Localization AI', 'Amélie routed to FR track: CDI generated, CSE notified.');
       }
-      if (newState.candidates.stefan.status === 'Offer Accepted') {
-        newState.candidates.stefan.status = 'Pending Council';
+      if (newState.candidates.stefan.status === 'Background Check') {
+        newState.candidates.stefan.status = 'Contract Generated';
         newState.councilQueue.de.push({ id: 'de-req-1', candidateId: 'stefan', status: 'Pending' });
         newState.activityLog = logEvent(newState, 'Oracle Localization AI', 'Stefan routed to DE track: Blocked for Betriebsrat clearance.');
       }

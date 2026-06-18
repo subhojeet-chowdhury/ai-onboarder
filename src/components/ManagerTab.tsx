@@ -11,7 +11,7 @@ export function ManagerTab() {
     dispatch({ type: 'APPROVE_BADGE', payload: { candidateId: 'amelie' } });
   };
 
-  const showBadgeCard = c.status === 'Active Employee' && c.documentVerified && c.photoUploaded && !c.badgeApproved;
+  const showBadgeCard = c.status === 'Active Employee' && c.preOnboardingDocs?.['badge']?.status === 'Uploaded' && !c.badgeApproved;
   
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">
@@ -82,21 +82,26 @@ export function ManagerTab() {
                  <div className="p-4 bg-white">
                      <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Onboarding Prerequisites</h4>
                     <ul className="text-sm space-y-3">
+                      {Object.entries(cand.postOnboardingTasks || {}).map(([taskId, task]: any) => (
+                        <li key={taskId} className="flex gap-3"> 
+                          {task.status === 'Completed' ? <CheckCircle size={18} className="text-green-500"/> : <Clock size={18} className="text-gray-300"/>} 
+                          <span className={task.status === 'Completed' ? "text-gray-800" : "text-gray-500"}>{task.label}</span>
+                        </li>
+                      ))}
                       <li className="flex gap-3"> 
-                        {cand.day1Activated ? <CheckCircle size={18} className="text-green-500"/> : <Clock size={18} className="text-gray-300"/>} 
-                        <span className={cand.day1Activated ? "text-gray-800" : "text-gray-500"}>Uniform & Safety Policy Acknowledgment</span>
+                        {cand.preOnboardingDocs?.['badge']?.status === 'Uploaded' ? <CheckCircle size={18} className="text-green-500"/> : <Clock size={18} className="text-gray-300"/>} 
+                        <span className={cand.preOnboardingDocs?.['badge']?.status === 'Uploaded' ? "text-gray-800" : "text-gray-500"}>ID Photo Uploaded</span>
                       </li>
-                      <li className="flex gap-3"> 
-                        {cand.documentVerified ? <CheckCircle size={18} className="text-green-500"/> : <Clock size={18} className="text-gray-300"/>} 
-                        <span className={cand.documentVerified ? "text-gray-800" : "text-gray-500"}>Verified Medical Clearance Certificate</span>
-                      </li>
-                      <li className="flex gap-3"> 
-                        {cand.photoUploaded ? <CheckCircle size={18} className="text-green-500"/> : <Clock size={18} className="text-gray-300"/>} 
-                        <span className={cand.photoUploaded ? "text-gray-800" : "text-gray-500"}>ID Photo Uploaded</span>
-                      </li>
-                      <li className="flex gap-3"> 
-                        {cand.badgeApproved ? <CheckCircle size={18} className="text-green-500"/> : <Clock size={18} className="text-gray-300"/>} 
-                        <span className={cand.badgeApproved ? "text-gray-800" : "text-gray-500"}>Facility Cleanroom Security Badge Issued</span>
+                      <li className="flex gap-3 flex-col sm:flex-row sm:items-center"> 
+                        <div className="flex gap-3 items-center">
+                          {cand.badgeApproved ? <CheckCircle size={18} className="text-green-500"/> : <Clock size={18} className="text-gray-300"/>} 
+                          <span className={cand.badgeApproved ? "text-gray-800" : "text-gray-500"}>Facility Cleanroom Security Badge Issued</span>
+                        </div>
+                        {cand.status === 'Active Employee' && cand.preOnboardingDocs?.['badge']?.status === 'Uploaded' && !cand.badgeApproved && cand.id === 'amelie' && (
+                           <button onClick={handleApproveBadge} className="mt-2 sm:mt-0 ml-7 sm:ml-auto px-3 py-1 bg-[#C74634] text-white text-xs rounded shadow-sm hover:bg-red-800 transition">
+                             Approve
+                           </button>
+                        )}
                       </li>
                     </ul>
                  </div>

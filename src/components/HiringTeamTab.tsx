@@ -1,34 +1,190 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../AppContext';
-import { motion } from 'motion/react';
-import { Users, SplitSquareHorizontal, ShieldAlert, FileCheck2, ChevronDown, ChevronRight, FileText, Loader2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Users, SplitSquareHorizontal, ShieldAlert, FileCheck2, ChevronDown, ChevronRight, FileText, Loader2, CheckCircle, Eye, X } from 'lucide-react';
+
+const getDummyDocText = (label: string) => {
+  const lower = label.toLowerCase();
+  
+  if (lower.includes('photo')) {
+      return (
+          <div className="w-48 h-48 bg-gray-200 rounded-full border-4 border-gray-300 shadow-inner flex items-center justify-center overflow-hidden mx-auto my-12">
+             <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=256&h=256&auto=format&fit=crop" alt="Profile" className="w-full h-full object-cover" />
+          </div>
+      );
+  }
+
+  if (lower.includes('rib') || lower.includes('iban')) {
+    return (
+      <div className="space-y-4 text-gray-700 font-sans p-2">
+        <h4 className="font-bold text-lg border-b pb-2">RELEVÉ D'IDENTITÉ BANCAIRE</h4>
+        <p><strong>Titulaire du compte :</strong> Amélie Laurent</p>
+        <p><strong>Domiciliation :</strong> BNP Paribas Paris</p>
+        <div className="p-4 bg-gray-100 rounded border border-gray-300 font-mono text-sm">
+          IBAN: FR76 3000 4028 3712 3456 7890 123
+          <br/>
+          BIC: BNPAFR2P
+        </div>
+      </div>
+    );
+  }
+  
+  if (lower.includes('médical') || lower.includes('aptitude') || lower.includes('medical')) {
+     return (
+      <div className="space-y-4 text-gray-700 font-sans p-2">
+        <div className="flex justify-between items-start border-b pb-4 mb-4">
+          <div>
+            <h4 className="font-bold text-xl">CERTIFICAT MÉDICAL</h4>
+            <p className="text-sm text-gray-500">Médecine du travail</p>
+          </div>
+          <div className="text-right text-sm">
+            <p><strong>Dr. Emile Dubois</strong></p>
+            <p>75014 Paris</p>
+          </div>
+        </div>
+        <p>
+          Je soussigné, Docteur Emile Dubois, certifie avoir examiné ce jour :<br/>
+          <strong>Mme. Amélie Laurent</strong>
+        </p>
+        <p>
+          Et déclare l'intéressée <strong>APTE</strong> à exercer le poste de :<br/>
+           <em>Technicienne de Laboratoire</em>.
+        </p>
+        <p className="mt-8 italic text-sm">
+          Fait à Paris, le 15 Juin 2026.
+        </p>
+        <div className="w-40 h-20 border-2 border-blue-400 mt-4 rounded-lg flex items-center justify-center text-blue-500 font-mono text-xs font-bold rotate-[-10deg] opacity-70">
+          TIMBRE & SIGNATURE<br/>Dr. Dubois
+        </div>
+      </div>
+     );
+  }
+  
+  if (lower.includes('sécurité') || lower.includes('uniforme')) {
+     return (
+      <div className="space-y-4 text-gray-700 font-sans p-2">
+        <h4 className="font-bold text-lg text-center border-b pb-2 mb-4">POLITIQUE DE SÉCURITÉ & UNIFORME</h4>
+        <p className="text-sm">
+          En signant ce document, l'employé s'engage à respecter les normes de sécurité de niveau BSL-2, 
+          incluant le port obligatoire des EPI (Équipements de Protection Individuelle).
+        </p>
+        <div className="p-4 bg-red-50 border border-red-100 rounded">
+          <p className="text-sm text-red-800">
+            <strong>Taille Confirmée :</strong> M<br/>
+            <strong>Chaussures de sécurité :</strong> Pointure 39
+          </p>
+        </div>
+        <p className="text-xs text-gray-500 mt-12 text-right">
+          Lu et approuvé électroniquement via le Portail Employé Unilabs.
+        </p>
+      </div>
+     );
+  }
+  
+  if (lower.includes('règlement')) {
+     return (
+      <div className="space-y-4 text-gray-700 font-sans text-sm p-2">
+        <h4 className="font-bold text-lg text-center border-b pb-2 mb-4">RÈGLEMENT INTÉRIEUR</h4>
+        <p><strong>Article 1 : Horaires et Présence</strong></p>
+        <p className="pl-4 text-gray-600">Le respect des horaires planifiés est impératif pour le bon fonctionnement des roulements en laboratoire.</p>
+        <p className="mt-4"><strong>Article 2 : Casier et Vestiaire</strong></p>
+        <p className="pl-4 text-gray-600">Les effets personnels doivent être déposés dans les vestiaires sécurisés de la zone périphérique D1.</p>
+        <div className="mt-12 pt-4 border-t border-gray-200 text-right">
+          <p><strong>Signature Numérique Validation:</strong></p>
+          <p className="font-mono text-xs text-green-600 mt-1">VER_e8f9a2</p>
+        </div>
+      </div>
+     );
+  }
+  
+  return (
+    <div className="space-y-4 text-gray-700 font-sans text-sm p-2">
+        <h4 className="font-bold text-lg border-b pb-2 mb-4">{label}</h4>
+        <p>Document standard généré. Les informations détaillées sont en cours d'analyse.</p>
+    </div>
+  );
+};
 
 export function HiringTeamTab() {
   const { state, dispatch } = useAppContext();
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
   const [isLocalizing, setIsLocalizing] = useState(false);
+  const [viewingDoc, setViewingDoc] = useState<{label: string} | null>(null);
 
-  const handleTriggerLocalization = () => {
+  const getPassedSteps = (currentStatus: string) => {
+    switch (currentStatus) {
+      case 'Pending': return ['Pending'];
+      case 'Offer Accepted': return ['Pending', 'Offer Accepted'];
+      case 'Validating Documents': return ['Pending', 'Offer Accepted', 'Validating Documents'];
+      case 'Background Check': return ['Pending', 'Offer Accepted', 'Validating Documents', 'Background Check'];
+      case 'Contract Generated': return ['Pending', 'Offer Accepted', 'Validating Documents', 'Background Check', 'Contract Generated'];
+      case 'Pending Council': return ['Pending', 'Offer Accepted', 'Validating Documents', 'Background Check', 'Contract Generated', 'Pending Council'];
+      case 'Cleared': return ['Pending', 'Offer Accepted', 'Validating Documents', 'Background Check', 'Contract Generated', 'Pending Council', 'Cleared'];
+      case 'Active Employee': return ['Pending', 'Offer Accepted', 'Validating Documents', 'Background Check', 'Contract Generated', 'Pending Council', 'Cleared', 'Active Employee'];
+      default: return [];
+    }
+  };
+
+  const getStepsForCandidate = (c: any) => {
+    const passed = getPassedSteps(c.status);
+    return c.country === 'DE' 
+      ? [
+          { label: 'Offer', passed: passed.includes('Offer Accepted') },
+          { label: 'Docs', passed: passed.includes('Validating Documents') },
+          { label: 'BGC', passed: passed.includes('Background Check') },
+          { label: 'Contract', passed: passed.includes('Contract Generated') },
+          { label: 'Council', passed: passed.includes('Pending Council') || passed.includes('Cleared') },
+          { label: 'Cleared', passed: passed.includes('Cleared') },
+          { label: 'Active', passed: passed.includes('Active Employee') }
+        ]
+      : [
+          { label: 'Offer', passed: passed.includes('Offer Accepted') },
+          { label: 'Docs', passed: passed.includes('Validating Documents') },
+          { label: 'BGC', passed: passed.includes('Background Check') },
+          { label: 'Contract', passed: passed.includes('Contract Generated') },
+          { label: 'Cleared', passed: passed.includes('Cleared') },
+          { label: 'Active', passed: passed.includes('Active Employee') }
+        ];
+  };
+
+  const candidates = Object.values(state.candidates) as any[];
+  const readyToRun = candidates.some((c) => {
+      const docs = Object.values(c.preOnboardingDocs || {});
+      return c.status === 'Offer Accepted' && (docs.length === 0 || docs.every((doc: any) => doc.status === 'Uploaded'));
+  });
+
+  const handleRunAgent = () => {
     setIsLocalizing(true);
-    setTimeout(() => {
-      dispatch({ type: 'TRIGGER_LOCALIZATION' });
-      setIsLocalizing(false);
-    }, 2500);
+    candidates.forEach((c) => {
+      if (c.status === 'Offer Accepted') {
+        const docs = Object.values(c.preOnboardingDocs || {});
+        if (docs.length === 0 || docs.every((doc: any) => doc.status === 'Uploaded')) {
+          dispatch({ type: 'SET_STATUS', payload: { candidateId: c.id, status: 'Validating Documents' } });
+          setTimeout(() => {
+            dispatch({ type: 'SET_STATUS', payload: { candidateId: c.id, status: 'Background Check' } });
+            setTimeout(() => {
+              dispatch({ type: 'TRIGGER_LOCALIZATION' });
+              setIsLocalizing(false);
+            }, 10000);
+          }, 10000);
+        }
+      }
+    });
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'Pending': return <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-medium border border-gray-200">Pending</span>;
       case 'Offer Accepted': return <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium border border-blue-200">Offer Accepted</span>;
+      case 'Validating Documents': return <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded text-xs font-medium border border-orange-200 flex items-center gap-1.5"><Loader2 size={12} className="animate-spin" /> Validating</span>;
+      case 'Background Check': return <span className="bg-indigo-100 text-indigo-800 px-2 py-1 rounded text-xs font-medium border border-indigo-200 flex items-center gap-1.5"><Loader2 size={12} className="animate-spin" /> BGC</span>;
+      case 'Contract Generated': return <span className="bg-emerald-100 text-emerald-800 px-2 py-1 rounded text-xs font-medium border border-emerald-200 flex items-center gap-1.5">Contract Ready</span>;
       case 'Pending Council': return <span className="bg-amber-100 text-amber-800 px-2 py-1 rounded text-xs font-medium border border-amber-200">Pending Council (DE)</span>;
-      case 'Cleared': return <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium border border-green-200">Cleared / Generated</span>;
+      case 'Cleared': return <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium border border-green-200">Cleared / Signed</span>;
       case 'Active Employee': return <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs font-medium border border-purple-200">Active Employee</span>;
       default: return null;
     }
   };
-
-  const candidates = Object.values(state.candidates) as any[];
-  const anyOffersAccepted = candidates.some(c => c.status === 'Offer Accepted');
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">
@@ -37,12 +193,11 @@ export function HiringTeamTab() {
           <h1 className="text-2xl font-semibold text-gray-800 tracking-tight">Oracle Recruiting</h1>
           <p className="text-sm text-gray-500 mt-1">Global Pipeline Overview</p>
         </div>
-        
-        {anyOffersAccepted && (
+        {readyToRun && (
           <motion.button
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            onClick={handleTriggerLocalization}
+            onClick={handleRunAgent}
             disabled={isLocalizing}
             className="flex items-center gap-2 bg-[#C74634] text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-red-800 transition disabled:opacity-75 disabled:cursor-not-allowed"
           >
@@ -94,6 +249,25 @@ export function HiringTeamTab() {
                     <td colSpan={5} className="px-14 py-4">
                       <div className="grid grid-cols-2 gap-8 bg-white p-4 border border-gray-200 rounded-lg shadow-sm">
                         
+                        <div className="col-span-2 mb-4">
+                          <h4 className="text-xs font-semibold text-gray-500 uppercase flex items-center gap-1.5 mb-3"><SplitSquareHorizontal size={14}/>State Transitions</h4>
+                          <div className="flex items-center gap-2 overflow-x-auto pb-2">
+                             {getStepsForCandidate(c).map((step, idx, arr) => (
+                               <React.Fragment key={idx}>
+                                  <div className={`flex flex-col items-center gap-1 ${step.passed ? 'text-[#C74634]' : 'text-gray-400'}`}>
+                                     <div className={`w-5 h-5 rounded-full flex items-center justify-center border-2 ${step.passed ? 'border-[#C74634] bg-red-50' : 'border-gray-300'}`}>
+                                        {step.passed && <CheckCircle size={12} />}
+                                     </div>
+                                     <span className="text-[10px] uppercase font-semibold text-center leading-tight whitespace-nowrap">{step.label}</span>
+                                  </div>
+                                  {idx < arr.length - 1 && (
+                                     <div className={`flex-grow h-[2px] min-w-[20px] ${arr[idx+1].passed ? 'bg-[#C74634]' : 'bg-gray-200'} mb-[18px]`}></div>
+                                  )}
+                               </React.Fragment>
+                             ))}
+                          </div>
+                        </div>
+
                         <div>
                           <h4 className="text-xs font-semibold text-gray-500 uppercase flex items-center gap-1.5 mb-2"><FileText size={14}/>Offer Details</h4>
                           <div className="space-y-1.5 text-sm text-gray-800">
@@ -108,15 +282,48 @@ export function HiringTeamTab() {
                           <h4 className="text-xs font-semibold text-gray-500 uppercase flex items-center gap-1.5 mb-2"><FileCheck2 size={14}/>Onboarding Tracker</h4>
                           <div className="space-y-1.5 text-sm text-gray-800">
                             <div className="flex justify-between"><span className="text-gray-500">Day 1 Activated:</span> <span className="font-medium">{c.day1Activated ? 'Yes' : 'Pending'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">Medical Document:</span> <span className="font-medium">{c.documentVerified ? 'Validated (OCR)' : 'Missing'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">Security Badge:</span> <span className="font-medium">{c.badgeApproved ? 'Approved' : 'Pending'}</span></div>
                             {c.country === 'DE' && (
                               <div className="flex justify-between">
                                 <span className="text-gray-500">Works Council Check:</span> 
-                                <span className="font-medium">{c.status === 'Cleared' ? 'Approved' : 'Pending Review'}</span>
+                                <span className="font-medium">{c.status === 'Cleared' || c.status === 'Active Employee' ? 'Approved' : 'Pending Review'}</span>
                               </div>
                             )}
                           </div>
+                        </div>
+
+                        <div className="col-span-2 mt-2 pt-4 border-t border-gray-100">
+                           <h4 className="text-xs font-semibold text-gray-500 uppercase flex items-center gap-1.5 mb-2"><FileText size={14}/>Pre-Onboarding Documents</h4>
+                           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                              {Object.entries(c.preOnboardingDocs || {}).map(([docId, doc]: any) => (
+                                <div key={docId} className="flex flex-col bg-gray-50 border border-gray-200 rounded-lg p-3">
+                                   <div className="flex justify-between items-start mb-2 gap-2 h-10">
+                                      <span className="text-[11px] font-semibold uppercase text-gray-700 leading-tight">{doc.label}</span>
+                                      <span className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap shrink-0 ${doc.status === 'Uploaded' ? 'bg-green-100 text-green-700' : doc.status === 'Rejected' ? 'bg-red-100 text-red-700' : 'bg-gray-200 text-gray-600'}`}>{doc.status}</span>
+                                   </div>
+                                   {doc.status === 'Uploaded' && (
+                                     <div className="flex flex-col gap-1.5 mt-auto">
+                                        <button 
+                                           onClick={() => setViewingDoc({ label: doc.label })}
+                                           className="text-xs border border-indigo-200 bg-white text-indigo-700 hover:bg-indigo-50 font-medium w-full text-center py-1.5 rounded flex justify-center items-center gap-1.5"
+                                        >
+                                           <Eye size={12}/> View
+                                        </button>
+                                        {['Pending', 'Offer Accepted', 'Validating Documents'].includes(c.status) && (
+                                          <button 
+                                             onClick={() => dispatch({ type: 'REJECT_PRE_DOC', payload: { candidateId: c.id, docId } })}
+                                             className="text-xs border border-red-200 bg-white text-red-600 hover:bg-red-50 font-medium w-full text-center py-1.5 rounded"
+                                          >
+                                             Reject
+                                          </button>
+                                        )}
+                                     </div>
+                                   )}
+                                </div>
+                              ))}
+                              {Object.keys(c.preOnboardingDocs || {}).length === 0 && (
+                                 <span className="text-sm text-gray-400">No documents required.</span>
+                              )}
+                           </div>
                         </div>
 
                       </div>
@@ -150,6 +357,34 @@ export function HiringTeamTab() {
             </p>
          </div>
       </div>
+
+      <AnimatePresence>
+         {viewingDoc && (
+            <motion.div 
+               initial={{ opacity: 0 }}
+               animate={{ opacity: 1 }}
+               exit={{ opacity: 0 }}
+               className="fixed inset-0 bg-black/60 z-[100] flex flex-col items-center justify-center p-4"
+               onClick={() => setViewingDoc(null)}
+            >
+               <motion.div 
+                  initial={{ scale: 0.95 }}
+                  animate={{ scale: 1 }}
+                  exit={{ scale: 0.95 }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="bg-white max-w-2xl w-full max-h-[80vh] rounded-xl shadow-2xl overflow-hidden flex flex-col"
+               >
+                  <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                     <h3 className="font-semibold text-gray-800">{viewingDoc.label}</h3>
+                     <button onClick={() => setViewingDoc(null)} className="text-gray-500 hover:text-gray-800"><X size={20}/></button>
+                  </div>
+                  <div className="p-6 overflow-y-auto flex-1 flex flex-col items-center justify-center min-h-[300px]">
+                     {getDummyDocText(viewingDoc.label)}
+                  </div>
+               </motion.div>
+            </motion.div>
+         )}
+      </AnimatePresence>
     </div>
   );
 }

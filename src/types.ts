@@ -3,6 +3,9 @@ export type CandidateId = 'amelie' | 'stefan';
 export type CandidateStatus =
   | 'Pending'
   | 'Offer Accepted'
+  | 'Validating Documents'
+  | 'Background Check'
+  | 'Contract Generated'
   | 'Pending Council'
   | 'Cleared'
   | 'Active Employee';
@@ -21,7 +24,8 @@ export interface Candidate {
   };
   offerAcceptedAt: string | null;
   signatureMeta: { geo: string; ip: string; timestamp: string } | null;
-  onboardingTasks: { id: string; label: string; status: 'Pending' | 'Completed' }[];
+  preOnboardingDocs: Record<string, { status: 'Pending' | 'Uploaded' | 'Rejected', label: string }>;
+  postOnboardingTasks: Record<string, { status: 'Pending' | 'Completed', label: string, type: 'video' | 'document' }>;
   documentVerified: boolean;
   badgeApproved: boolean;
   day1Activated: boolean;
@@ -30,6 +34,7 @@ export interface Candidate {
   uniformSigned: boolean;
   videoWatched: boolean;
   photoUploaded: boolean;
+  contractSigned: boolean;
 }
 
 export interface ChatMessage {

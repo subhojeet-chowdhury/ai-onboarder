@@ -15,6 +15,7 @@ import {
   X,
   HelpCircle,
   Camera,
+  FileCheck2,
   Home,
   BookOpen,
   Bell,
@@ -32,6 +33,7 @@ export function AmelieTab() {
   const [isSigning, setIsSigning] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [activeUploadDocId, setActiveUploadDocId] = useState<string | null>(null);
   const [showUniformModal, setShowUniformModal] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
@@ -66,7 +68,13 @@ export function AmelieTab() {
     setTimeout(() => {
       setIsUploading(false);
       setShowUploadModal(false);
-      dispatch({ type: "UPLOAD_DOCUMENT", payload: { candidateId: "amelie" } });
+      if (activeUploadDocId) {
+        if (activeUploadDocId === 'medical') {
+            dispatch({ type: "UPLOAD_DOCUMENT", payload: { candidateId: "amelie" } });
+        }
+        dispatch({ type: "UPLOAD_PRE_DOC", payload: { candidateId: "amelie", docId: activeUploadDocId } });
+        setActiveUploadDocId(null);
+      }
     }, 2000); // simulate OCR
   };
 
@@ -76,7 +84,13 @@ export function AmelieTab() {
       setIsUploading(false);
       setShowPhotoModal(false);
       dispatch({ type: "UPLOAD_PHOTO", payload: { candidateId: "amelie" } });
+      dispatch({ type: "UPLOAD_PRE_DOC", payload: { candidateId: "amelie", docId: "badge" } });
     }, 2000);
+  };
+
+  const handleDocSubmit = (docId: string) => {
+    setActiveUploadDocId(docId);
+    setShowUploadModal(true);
   };
 
   const handleChatSubmit = (e: React.FormEvent) => {
@@ -136,15 +150,17 @@ export function AmelieTab() {
   const handleSignUniform = () => {
     setShowUniformModal(false);
     dispatch({ type: "SIGN_UNIFORM", payload: { candidateId: "amelie" } });
+    dispatch({ type: "UPLOAD_PRE_DOC", payload: { candidateId: "amelie", docId: "uniform" } });
   };
 
   const handleWatchVideo = () => {
     setShowVideoModal(false);
     dispatch({ type: "WATCH_VIDEO", payload: { candidateId: "amelie" } });
+    dispatch({ type: "COMPLETE_POST_TASK", payload: { candidateId: "amelie", taskId: "biohazard" } });
   };
 
   return (
-    <PhoneFrame headerTitle={c.isAuthenticated ? "Portail Employé" : ""}>
+    <PhoneFrame headerTitle={c.isAuthenticated ? (c.status === "Active Employee" ? "Portail Employé" : "Portail Onboarding") : ""}>
       {/* Lock Screen */}
       {!c.isAuthenticated && (
         <div className="w-full min-h-full bg-slate-900 flex flex-col text-white relative overflow-hidden">
@@ -288,23 +304,65 @@ export function AmelieTab() {
               </motion.div>
             )}
 
-            {/* State: Offer Accepted (Not Cleared yet) */}
+            {/* Pre-Onboarding Tracking */}
             {c.isAuthenticated &&
-              c.status === "Offer Accepted" &&
+              ["Offer Accepted", "Validating Documents", "Background Check", "Contract Generated"].includes(c.status) &&
               !c.day1Activated && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="bg-green-50 p-5 rounded-2xl border border-green-200 flex flex-col items-center text-center"
+                  className="space-y-4"
                 >
-                  <CheckCircle2 className="text-green-600 mb-2" size={32} />
-                  <h2 className="font-semibold text-green-800">
-                    Offre acceptée
-                  </h2>
-                  <p className="text-sm text-green-700 mt-2">
-                    Votre dossier est en cours de traitement par notre équipe
-                    RH.
-                  </p>
+                  <div className="bg-indigo-50 p-5 rounded-2xl border border-indigo-200">
+                    <h2 className="font-semibold text-indigo-900 mb-2">
+                       Pré-intégration
+                    </h2>
+                    <p className="text-sm text-indigo-700 mb-4">
+                       Veuillez soumettre vos documents pour finaliser la préparation de votre contrat.
+                    </p>
+                    <div className="space-y-3">
+                      {Object.entries(c.preOnboardingDocs || {}).map(([docId, doc]: any) => (
+                         <div key={docId} className="bg-white p-3 rounded-xl border border-indigo-100 flex items-center justify-between">
+                            <div>
+                               <p className="text-sm font-medium text-gray-800">{doc.label}</p>
+                               <p className={`text-xs ${doc.status === 'Uploaded' ? 'text-green-600' : doc.status === 'Rejected' ? 'text-red-500' : 'text-gray-500'}`}>
+                                  {doc.status === 'Uploaded' ? 'Soumis' : doc.status === 'Rejected' ? 'Rejeté (Veuillez resoumettre)' : 'À soumettre'}
+                               </p>
+                            </div>
+                            <button
+                               disabled={doc.status === 'Uploaded' || !["Offer Accepted", "Validating Documents"].includes(c.status)}
+                               onClick={() => handleDocSubmit(docId)}
+                               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${doc.status === 'Uploaded' ? 'bg-gray-100 text-gray-400' : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'}`}
+                            >
+                               {doc.status === 'Uploaded' ? 'Soumis' : 'Soumettre'}
+                            </button>
+                         </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {c.status === 'Validating Documents' && (
+                     <div className="bg-orange-50 p-4 rounded-xl border border-orange-100 flex items-center gap-3">
+                         <div className="animate-spin h-5 w-5 border-2 border-orange-500 border-t-transparent rounded-full" />
+                         <span className="text-sm text-orange-800 font-medium">Validation des documents en cours...</span>
+                     </div>
+                  )}
+                  {c.status === 'Background Check' && (
+                     <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 flex items-center gap-3">
+                         <div className="animate-spin h-5 w-5 border-2 border-blue-500 border-t-transparent rounded-full" />
+                         <span className="text-sm text-blue-800 font-medium">Vérification des antécédents (BGC)...</span>
+                     </div>
+                  )}
+                  {c.status === 'Contract Generated' && (
+                     <div className="bg-green-50 p-5 rounded-2xl border border-green-200 text-center shadow-lg transform transition-all hover:scale-105">
+                         <CheckCircle2 className="text-green-600 mx-auto mb-2" size={32} />
+                         <h3 className="font-semibold text-green-900 mb-2">Contrat Généré</h3>
+                         <p className="text-sm text-green-700 mb-4">Votre contrat CDI est prêt à être signé.</p>
+                         <button onClick={() => setShowCDIModal(true)} className="bg-green-600 text-white w-full py-2.5 rounded-xl text-sm font-medium hover:bg-green-700 shadow-md">
+                             Voir & Signer le CDI
+                         </button>
+                     </div>
+                  )}
                 </motion.div>
               )}
 
@@ -322,7 +380,7 @@ export function AmelieTab() {
                     Félicitations Amélie !
                   </h2>
                   <p className="text-sm text-green-700 mt-2 mb-4">
-                    Votre contrat CDI a été généré et accepté. En attente du
+                    Votre contrat CDI a été signé. En attente du
                     premier jour.
                   </p>
                   <div className="flex flex-col gap-3 w-full">
@@ -354,149 +412,47 @@ export function AmelieTab() {
                     Tâches Prioritaires
                   </h3>
                   <div className="space-y-4">
-                    {/* Task 1 */}
-                    <div
-                      className={`flex items-start gap-3 p-3 rounded-xl border ${c.uniformSigned ? "bg-gray-50 border-gray-100" : "bg-white border-blue-200 shadow-sm"}`}
-                    >
-                      {c.uniformSigned ? (
-                        <CheckCircle2
-                          className="text-green-500 shrink-0 mt-0.5"
-                          size={20}
-                        />
-                      ) : (
-                        <div className="h-5 w-5 rounded-full border-2 border-gray-300 shrink-0 mt-0.5" />
-                      )}
-                      <div className="flex-1">
-                        <div className="text-sm font-semibold text-gray-800">
-                          Politique de sécurité et uniforme
-                        </div>
-                        {c.uniformSigned ? (
-                          <div className="text-xs text-gray-500 mt-1">
-                            Lue et signée électroniquement. L'uniforme a été
-                            commandé à votre taille.
-                          </div>
+                    {Object.entries(c.postOnboardingTasks || {}).map(([taskId, task]: any) => (
+                      <div
+                        key={taskId}
+                        className={`flex items-start gap-3 p-3 rounded-xl border ${task.status === 'Completed' ? "bg-gray-50 border-gray-100" : "bg-white border-blue-200 shadow-sm"}`}
+                      >
+                        {task.status === 'Completed' ? (
+                          <CheckCircle2
+                            className="text-green-500 shrink-0 mt-0.5"
+                            size={20}
+                          />
                         ) : (
-                          <div className="text-xs text-gray-500 mt-1 mb-2">
-                            Veuillez prendre connaissance de la politique de
-                            sécurité du laboratoire et configurer votre
-                            uniforme.
+                          <div className="h-5 w-5 rounded-full border-2 border-gray-300 shrink-0 mt-0.5" />
+                        )}
+                        <div className="flex-1">
+                          <div className="text-sm font-semibold text-gray-800">
+                            {task.label}
                           </div>
-                        )}
-                        {!c.uniformSigned && (
-                          <button
-                            onClick={() => setShowUniformModal(true)}
-                            className="flex items-center justify-center gap-2 w-full bg-[#FAFAFA] border border-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-100 transition font-medium"
-                          >
-                            <Fingerprint size={16} /> Examiner et signer
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Task 2 */}
-                    <div
-                      className={`flex items-start gap-3 p-3 rounded-xl border ${c.documentVerified ? "bg-gray-50 border-gray-100" : "bg-white border-blue-200 shadow-sm"}`}
-                    >
-                      {c.documentVerified ? (
-                        <CheckCircle2
-                          className="text-green-500 shrink-0 mt-0.5"
-                          size={20}
-                        />
-                      ) : (
-                        <div className="h-5 w-5 rounded-full border-2 border-gray-300 shrink-0 mt-0.5" />
-                      )}
-                      <div className="flex-1">
-                        <div className="text-sm font-semibold text-gray-800">
-                          Certificat médical d'aptitude
+                          {task.status === 'Completed' ? (
+                            <div className="text-xs text-gray-500 mt-1">
+                              Action complétée. Enregistrée dans votre profil.
+                            </div>
+                          ) : (
+                            <div className="text-xs text-gray-500 mt-1 mb-2">
+                              Action requise dans le cadre de votre intégration.
+                            </div>
+                          )}
+                          {task.status !== 'Completed' && (
+                            <button
+                              onClick={() => {
+                                if (task.type === 'video') setShowVideoModal(true);
+                                else dispatch({ type: 'COMPLETE_POST_TASK', payload: { candidateId: 'amelie', taskId } });
+                              }}
+                              className="flex items-center justify-center gap-2 w-full bg-[#FAFAFA] border border-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-100 transition font-medium"
+                            >
+                              {task.type === 'video' ? <Play size={16} /> : <FileCheck2 size={16} />}
+                              {task.type === 'video' ? "Regarder la vidéo" : "Marquer comme complété"}
+                            </button>
+                          )}
                         </div>
-                        <div className="text-xs text-gray-500 mt-1 mb-2">
-                          Requis pour l'accès aux salles blanches. Veuillez
-                          uploader un scan clair avec le tampon de la clinique.
-                        </div>
-                        {!c.documentVerified && (
-                          <button
-                            onClick={() => setShowUploadModal(true)}
-                            className="flex items-center justify-center gap-2 w-full bg-[#FAFAFA] border border-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-100 transition font-medium"
-                          >
-                            <Upload size={16} /> Uploader le document
-                          </button>
-                        )}
                       </div>
-                    </div>
-
-                    {/* Task Photo Upload */}
-                    <div
-                      className={`flex items-start gap-3 p-3 rounded-xl border ${c.photoUploaded ? "bg-gray-50 border-gray-100" : "bg-white border-blue-200 shadow-sm"}`}
-                    >
-                      {c.photoUploaded ? (
-                        <CheckCircle2
-                          className="text-green-500 shrink-0 mt-0.5"
-                          size={20}
-                        />
-                      ) : (
-                        <div className="h-5 w-5 rounded-full border-2 border-gray-300 shrink-0 mt-0.5" />
-                      )}
-                      <div className="flex-1">
-                        <div className="text-sm font-semibold text-gray-800">
-                          Photo de Badge d'Accès
-                        </div>
-                        {c.photoUploaded ? (
-                          <div className="text-xs text-gray-500 mt-1">
-                            Photo téléchargée et approuvée.
-                          </div>
-                        ) : (
-                          <div className="text-xs text-gray-500 mt-1 mb-2">
-                            Veuillez télécharger une photo claire de votre visage pour votre badge d'accès en salle blanche.
-                          </div>
-                        )}
-                        {!c.photoUploaded && (
-                          <button
-                            onClick={() => setShowPhotoModal(true)}
-                            className="flex items-center justify-center gap-2 w-full bg-[#FAFAFA] border border-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-100 transition font-medium"
-                          >
-                            <Camera size={16} /> Ajouter une photo
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Task 3 */}
-                    <div
-                      className={`flex items-start gap-3 p-3 rounded-xl border ${c.videoWatched ? "bg-gray-50 border-gray-100" : "bg-white border-blue-200 shadow-sm"}`}
-                    >
-                      {c.videoWatched ? (
-                        <CheckCircle2
-                          className="text-green-500 shrink-0 mt-0.5"
-                          size={20}
-                        />
-                      ) : (
-                        <div className="h-5 w-5 rounded-full border-2 border-gray-300 shrink-0 mt-0.5" />
-                      )}
-                      <div className="flex-1">
-                        <div className="text-sm font-semibold text-gray-800">
-                          Module vidéo Biohazard L2
-                        </div>
-                        {c.videoWatched ? (
-                          <div className="text-xs text-gray-500 mt-1">
-                            Formation complétée. Score: 100%. Certification
-                            ajoutée à votre profil.
-                          </div>
-                        ) : (
-                          <div className="text-xs text-gray-500 mt-1 mb-2">
-                            Vidéos de formation en ligne requises avant l'accès
-                            au laboratoire de niveau 2.
-                          </div>
-                        )}
-                        {!c.videoWatched && (
-                          <button
-                            onClick={() => setShowVideoModal(true)}
-                            className="flex items-center justify-center gap-2 w-full bg-[#FAFAFA] border border-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-100 transition font-medium"
-                          >
-                            <Play size={16} /> Regarder la vidéo
-                          </button>
-                        )}
-                      </div>
-                    </div>
+                    ))}
                   </div>
                 </div>
 
@@ -794,6 +750,22 @@ export function AmelieTab() {
             )}
           </AnimatePresence>
 
+          {/* Generic Uploading Overlay */}
+          <AnimatePresence>
+             {isUploading && !showUploadModal && !showPhotoModal && (
+                 <motion.div
+                   initial={{ opacity: 0 }}
+                   animate={{ opacity: 1 }}
+                   exit={{ opacity: 0 }}
+                   className="absolute inset-0 bg-white/80 backdrop-blur-sm z-[60] flex flex-col items-center justify-center"
+                 >
+                    <div className="animate-spin h-10 w-10 border-4 border-[#C74634] border-t-transparent rounded-full mb-4" />
+                    <p className="font-semibold text-gray-800 text-lg">Envoi en cours...</p>
+                    <p className="text-sm text-gray-500">Veuillez patienter.</p>
+                 </motion.div>
+             )}
+          </AnimatePresence>
+
           {/* Upload Modal */}
           <AnimatePresence>
             {showUploadModal && (
@@ -822,7 +794,7 @@ export function AmelieTab() {
                         Télécharger le document
                       </h3>
                       <p className="text-xs text-gray-500 mb-6 text-center">
-                        Veuillez vous assurer que le document médical est bien scanné.
+                        Veuillez vous assurer que le document ({c.preOnboardingDocs?.[activeUploadDocId || '']?.label || 'médicaux'}) est bien scanné.
                       </p>
                       <button
                         onClick={handleConfirmUpload}
@@ -853,7 +825,7 @@ export function AmelieTab() {
                         OCR en cours...
                       </h3>
                       <p className="text-xs text-gray-500 mt-2">
-                        Extraction des données de santé...
+                        Extraction des données en cours...
                       </p>
                     </div>
                   )}
@@ -945,14 +917,14 @@ export function AmelieTab() {
                 <div className="bg-gray-100 border-b border-gray-200 p-4 flex items-center justify-between">
                   <div>
                     <h3 className="font-semibold text-gray-800">Contrat_CDI_Laurent.pdf</h3>
-                    <p className="text-xs text-green-600 font-medium">Généré et Signé</p>
+                    <p className="text-xs text-green-600 font-medium">{c.contractSigned ? 'Généré et Signé' : 'Généré - En attente de signature'}</p>
                   </div>
                   <button onClick={() => setShowCDIModal(false)} className="p-2 bg-gray-200 rounded-full hover:bg-gray-300">
                     <X size={20} />
                   </button>
                 </div>
-                <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
-                   <div className="bg-white border border-gray-200 shadow-sm p-6 space-y-4 font-serif text-sm text-gray-700 leading-relaxed max-w-sm mx-auto">
+                <div className="flex-1 overflow-y-auto p-4 bg-gray-50 flex flex-col">
+                   <div className="bg-white border border-gray-200 shadow-sm p-6 space-y-4 font-serif text-sm text-gray-700 leading-relaxed max-w-sm mx-auto flex-1 w-full relative mb-4">
                      <div className="text-center mb-6">
                         <h2 className="font-bold text-lg text-gray-900 border-b pb-2 inline-block">CONTRAT DE TRAVAIL À DURÉE INDÉTERMINÉE</h2>
                      </div>
@@ -964,17 +936,31 @@ export function AmelieTab() {
                      <p>Mme Amélie Laurent est engagée à partir du {c.offerDetails.startDate} en qualité de {c.role}, coefficient 120, de la convention collective nationale. Elle percevra une rémunération de base de {c.offerDetails.baseComp}.</p>
                      <p><strong>Article 2 : Lieu de travail</strong></p>
                      <p>Le lieu de travail principal est fixé au site de Paris. Des indemnités spécifiques incluent {c.offerDetails.allowances} et une prime de nuit de {c.offerDetails.shiftPremium}.</p>
-                     <div className="mt-8 grid grid-cols-2 gap-4">
+                     <div className="mt-8 grid grid-cols-2 gap-4 pb-8">
                         <div>
                           <p className="text-xs text-gray-500 mb-2">L'Employeur (Oracle France)</p>
                           <div className="w-20 border-b-2 border-blue-900 bg-blue-50 py-1 text-center font-mono text-xs text-blue-800">Signé Auto.</div>
                         </div>
                         <div>
                           <p className="text-xs text-gray-500 mb-2">Le Salarié</p>
-                          <div className="w-20 border-b-2 border-[#C74634] bg-red-50 py-1 text-center font-mono text-xs text-[#b83b2a]">e-Signé</div>
+                          {c.contractSigned ? (
+                             <div className="w-20 border-b-2 border-[#C74634] bg-red-50 py-1 text-center font-mono text-xs text-[#b83b2a]">e-Signé</div>
+                          ) : (
+                             <div className="text-gray-400 italic text-xs mt-3">En attente de signature</div>
+                          )}
                         </div>
                      </div>
                    </div>
+                   {!c.contractSigned && (
+                      <div className="bg-white p-4 border border-gray-200 mt-auto shrink-0 shadow-xl rounded-xl z-10 w-full max-w-sm mx-auto">
+                         <button 
+                             onClick={() => { dispatch({ type: 'SIGN_CONTRACT', payload: { candidateId: 'amelie' }}); setShowCDIModal(false); }}
+                             className="w-full bg-[#C74634] text-white py-3 rounded-xl font-medium hover:bg-red-800 transition shadow-md flex justify-center items-center gap-2"
+                         >
+                            <Fingerprint size={18} /> Signer le Contrat
+                         </button>
+                      </div>
+                   )}
                 </div>
               </motion.div>
             )}
