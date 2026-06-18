@@ -28,7 +28,7 @@ export function AmelieTab() {
   const { state, dispatch } = useAppContext();
   const c = state.candidates.amelie;
   const [chatOpen, setChatOpen] = useState(false);
-  const [chatInput, setChatInput] = useState("");
+  const [chatInput, setChatInput] = useState("Je n'ai pas reçu ma prime de nuit pour mon service de la semaine dernière.");
   const [isUploading, setIsUploading] = useState(false);
   const [isSigning, setIsSigning] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -39,7 +39,7 @@ export function AmelieTab() {
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [showCDIModal, setShowCDIModal] = useState(false);
   const [showTicketForm, setShowTicketForm] = useState(false);
-  const [ticketDesc, setTicketDesc] = useState("");
+  const [ticketDesc, setTicketDesc] = useState("Je n'ai pas reçu ma prime de nuit pour mon service de la semaine dernière.");
   const [activeTab, setActiveTab] = useState<'home' | 'notifs' | 'learning' | 'profile'>('home');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -304,6 +304,25 @@ export function AmelieTab() {
               </motion.div>
             )}
 
+            {/* Offer Accepted Success */}
+            {c.isAuthenticated && c.status === "Offer Accepted" && (
+                <motion.div
+                   initial={{ opacity: 0, y: 10 }}
+                   animate={{ opacity: 1, y: 0 }}
+                   className="bg-green-50 border border-green-200 rounded-2xl p-5 mb-6 text-center"
+                >
+                   <CheckCircle2 className="text-green-500 mx-auto mb-2" size={32} />
+                   <h3 className="font-semibold text-green-800 text-lg mb-1">Offre acceptée avec succès !</h3>
+                   <p className="text-sm text-green-700 mb-4">Félicitations ! Pour procéder à l'étape suivante, veuillez compléter les documents de pré-intégration.</p>
+                   <button 
+                      onClick={() => document.getElementById('pre-onboarding-section')?.scrollIntoView({ behavior: 'smooth' })}
+                      className="px-4 py-2 bg-green-600 text-white font-medium text-sm rounded-lg hover:bg-green-700 transition"
+                   >
+                       Uploader les documents
+                   </button>
+                </motion.div>
+            )}
+
             {/* Pre-Onboarding Tracking */}
             {c.isAuthenticated &&
               ["Offer Accepted", "Validating Documents", "Background Check", "Contract Generated"].includes(c.status) &&
@@ -313,35 +332,43 @@ export function AmelieTab() {
                   animate={{ opacity: 1, scale: 1 }}
                   className="space-y-4"
                 >
-                  <div className="bg-indigo-50 p-5 rounded-2xl border border-indigo-200">
-                    <h2 className="font-semibold text-indigo-900 mb-2">
-                       Pré-intégration
-                    </h2>
-                    <p className="text-sm text-indigo-700 mb-4">
-                       Veuillez soumettre vos documents pour finaliser la préparation de votre contrat.
-                    </p>
-                    <div className="space-y-3">
-                      {Object.entries(c.preOnboardingDocs || {}).map(([docId, doc]: any) => (
-                         <div key={docId} className="bg-white p-3 rounded-xl border border-indigo-100 flex items-center justify-between">
-                            <div>
-                               <p className="text-sm font-medium text-gray-800">{doc.label}</p>
-                               <p className={`text-xs ${doc.status === 'Uploaded' ? 'text-green-600' : doc.status === 'Rejected' ? 'text-red-500' : 'text-gray-500'}`}>
-                                  {doc.status === 'Uploaded' ? 'Soumis' : doc.status === 'Rejected' ? 'Rejeté (Veuillez resoumettre)' : 'À soumettre'}
-                               </p>
-                            </div>
-                            <button
-                               disabled={doc.status === 'Uploaded' || !["Offer Accepted", "Validating Documents"].includes(c.status)}
-                               onClick={() => handleDocSubmit(docId)}
-                               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${doc.status === 'Uploaded' ? 'bg-gray-100 text-gray-400' : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'}`}
-                            >
-                               {doc.status === 'Uploaded' ? 'Soumis' : 'Soumettre'}
-                            </button>
-                         </div>
-                      ))}
+                  {["Offer Accepted", "Validating Documents", "Background Check"].includes(c.status) && (
+                    <div id="pre-onboarding-section" className="bg-indigo-50 p-5 rounded-2xl border border-indigo-200">
+                      <h2 className="font-semibold text-indigo-900 mb-2">
+                         Pré-intégration
+                      </h2>
+                      <p className="text-sm text-indigo-700 mb-4">
+                         Veuillez soumettre vos documents pour finaliser la préparation de votre contrat.
+                      </p>
+                      <div className="space-y-3">
+                        {Object.entries(c.preOnboardingDocs || {}).map(([docId, doc]: any) => (
+                           <div key={docId} className="bg-white p-3 rounded-xl border border-indigo-100 flex items-center justify-between">
+                              <div>
+                                 <p className="text-sm font-medium text-gray-800">{doc.label}</p>
+                                 <p className={`text-xs ${doc.status === 'Uploaded' || doc.status === 'Needs Review' ? 'text-green-600' : doc.status === 'Rejected' ? 'text-red-500' : 'text-gray-500'}`}>
+                                    {doc.status === 'Uploaded' || doc.status === 'Needs Review' ? 'Soumis' : doc.status === 'Rejected' ? 'Rejeté (Veuillez resoumettre)' : 'À soumettre'}
+                                 </p>
+                              </div>
+                              <button
+                                 disabled={doc.status === 'Uploaded' || doc.status === 'Needs Review' || !["Offer Accepted", "Validating Documents"].includes(c.status)}
+                                 onClick={() => {
+                                    if (docId === 'badge') {
+                                       setShowPhotoModal(true);
+                                    } else {
+                                       handleDocSubmit(docId);
+                                    }
+                                 }}
+                                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${doc.status === 'Uploaded' || doc.status === 'Needs Review' ? 'bg-gray-100 text-gray-400' : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'}`}
+                              >
+                                 {doc.status === 'Uploaded' || doc.status === 'Needs Review' ? 'Soumis' : 'Soumettre'}
+                              </button>
+                           </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
-                  {c.status === 'Validating Documents' && (
+                  {c.status === 'Validating Documents' && Object.values(c.preOnboardingDocs || {}).every((d: any) => d.status === 'Uploaded' || d.status === 'Needs Review') && (
                      <div className="bg-orange-50 p-4 rounded-xl border border-orange-100 flex items-center gap-3">
                          <div className="animate-spin h-5 w-5 border-2 border-orange-500 border-t-transparent rounded-full" />
                          <span className="text-sm text-orange-800 font-medium">Validation des documents en cours...</span>

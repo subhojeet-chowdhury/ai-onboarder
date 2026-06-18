@@ -80,7 +80,6 @@ export function ManagerTab() {
                    <div className="text-sm font-medium text-[#C74634] bg-red-50 px-2 py-1 rounded">{velocity}% Complete</div>
                  </div>
                  <div className="p-4 bg-white">
-                     <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Onboarding Prerequisites</h4>
                     <ul className="text-sm space-y-3">
                       {Object.entries(cand.postOnboardingTasks || {}).map(([taskId, task]: any) => (
                         <li key={taskId} className="flex gap-3"> 

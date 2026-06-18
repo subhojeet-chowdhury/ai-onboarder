@@ -24,7 +24,8 @@ export interface Candidate {
   };
   offerAcceptedAt: string | null;
   signatureMeta: { geo: string; ip: string; timestamp: string } | null;
-  preOnboardingDocs: Record<string, { status: 'Pending' | 'Uploaded' | 'Rejected', label: string }>;
+  preOnboardingDocs: Record<string, { status: 'Pending' | 'Uploaded' | 'Rejected' | 'Needs Review', label: string }>;
+  docsFlagged?: boolean;
   postOnboardingTasks: Record<string, { status: 'Pending' | 'Completed', label: string, type: 'video' | 'document' }>;
   documentVerified: boolean;
   badgeApproved: boolean;

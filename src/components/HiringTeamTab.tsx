@@ -135,6 +135,8 @@ export function HiringTeamTab() {
           { label: 'Contract', passed: passed.includes('Contract Generated') },
           { label: 'Council', passed: passed.includes('Pending Council') || passed.includes('Cleared') },
           { label: 'Cleared', passed: passed.includes('Cleared') },
+          { label: 'ID Creation', passed: passed.includes('Active Employee') },
+          { label: 'Asset Prov.', passed: passed.includes('Active Employee') },
           { label: 'Active', passed: passed.includes('Active Employee') }
         ]
       : [
@@ -143,33 +145,80 @@ export function HiringTeamTab() {
           { label: 'BGC', passed: passed.includes('Background Check') },
           { label: 'Contract', passed: passed.includes('Contract Generated') },
           { label: 'Cleared', passed: passed.includes('Cleared') },
+          { label: 'ID Creation', passed: passed.includes('Active Employee') },
+          { label: 'Asset Prov.', passed: passed.includes('Active Employee') },
           { label: 'Active', passed: passed.includes('Active Employee') }
         ];
   };
 
   const candidates = Object.values(state.candidates) as any[];
   const readyToRun = candidates.some((c) => {
-      const docs = Object.values(c.preOnboardingDocs || {});
-      return c.status === 'Offer Accepted' && (docs.length === 0 || docs.every((doc: any) => doc.status === 'Uploaded'));
+      const docs = Object.values(c.preOnboardingDocs || {}) as any[];
+      if (c.status === 'Offer Accepted' && (docs.length === 0 || docs.every(d => d.status === 'Uploaded'))) {
+          return true;
+      }
+      if (c.status === 'Validating Documents' && docs.length > 0 && docs.every(d => d.status === 'Uploaded')) {
+          return true;
+      }
+      return false;
   });
 
   const handleRunAgent = () => {
     setIsLocalizing(true);
+    let agentsStarted = 0;
+    
     candidates.forEach((c) => {
+      const docEntries = Object.entries(c.preOnboardingDocs || {});
+
       if (c.status === 'Offer Accepted') {
-        const docs = Object.values(c.preOnboardingDocs || {});
-        if (docs.length === 0 || docs.every((doc: any) => doc.status === 'Uploaded')) {
+        if (docEntries.length === 0 || docEntries.every(([_, doc]: any) => doc.status === 'Uploaded')) {
+          agentsStarted++;
           dispatch({ type: 'SET_STATUS', payload: { candidateId: c.id, status: 'Validating Documents' } });
+          
           setTimeout(() => {
-            dispatch({ type: 'SET_STATUS', payload: { candidateId: c.id, status: 'Background Check' } });
-            setTimeout(() => {
-              dispatch({ type: 'TRIGGER_LOCALIZATION' });
-              setIsLocalizing(false);
-            }, 10000);
-          }, 10000);
+            if (docEntries.length > 0 && !c.docsFlagged) {
+               // Flag one random document for review
+               const randomIndex = Math.floor(Math.random() * docEntries.length);
+               const [flaggedDocId] = docEntries[randomIndex];
+               
+               dispatch({ type: 'SET_DOC_STATUS', payload: { candidateId: c.id, docId: flaggedDocId, status: 'Needs Review' } });
+               dispatch({ type: 'SET_DOCS_FLAGGED', payload: { candidateId: c.id, flagged: true } });
+               setIsLocalizing(false);
+            } else {
+               // Proceed normally since flag is removed or no docs
+               resumeAgent(c.id);
+            }
+          }, 3000);
+        }
+      } else if (c.status === 'Validating Documents') {
+        if (docEntries.length > 0 && docEntries.every(([_, doc]: any) => doc.status === 'Uploaded')) {
+           agentsStarted++;
+           resumeAgent(c.id);
         }
       }
     });
+
+    if (agentsStarted === 0) {
+       setIsLocalizing(false);
+    }
+  };
+
+  const resumeAgent = (candidateId: string, bypassingDocId?: string) => {
+    // Check if the candidate has any outstanding Needs Review documents
+    const c = state.candidates[candidateId];
+    if (!c) return;
+    
+    const docs = Object.entries(c.preOnboardingDocs || {}) as [string, any][];
+    if (docs.some(([id, d]) => id !== bypassingDocId && (d.status === 'Needs Review' || d.status === 'Rejected' || d.status === 'Pending'))) {
+        return; // wait for all to be uploaded
+    }
+
+    setIsLocalizing(true);
+    dispatch({ type: 'SET_STATUS', payload: { candidateId, status: 'Background Check' } });
+    setTimeout(() => {
+      dispatch({ type: 'TRIGGER_LOCALIZATION' });
+      setIsLocalizing(false);
+    }, 5000);
   };
 
   const getStatusBadge = (status: string) => {
@@ -298,9 +347,11 @@ export function HiringTeamTab() {
                                 <div key={docId} className="flex flex-col bg-gray-50 border border-gray-200 rounded-lg p-3">
                                    <div className="flex justify-between items-start mb-2 gap-2 h-10">
                                       <span className="text-[11px] font-semibold uppercase text-gray-700 leading-tight">{doc.label}</span>
-                                      <span className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap shrink-0 ${doc.status === 'Uploaded' ? 'bg-green-100 text-green-700' : doc.status === 'Rejected' ? 'bg-red-100 text-red-700' : 'bg-gray-200 text-gray-600'}`}>{doc.status}</span>
+                                      <span className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap shrink-0 ${doc.status === 'Uploaded' ? 'bg-green-100 text-green-700' : doc.status === 'Needs Review' ? 'bg-yellow-100 text-yellow-800' : doc.status === 'Rejected' ? 'bg-red-100 text-red-700' : 'bg-gray-200 text-gray-600'}`}>
+                                        {doc.status}
+                                      </span>
                                    </div>
-                                   {doc.status === 'Uploaded' && (
+                                   {(doc.status === 'Uploaded' || doc.status === 'Needs Review') && (
                                      <div className="flex flex-col gap-1.5 mt-auto">
                                         <button 
                                            onClick={() => setViewingDoc({ label: doc.label })}
@@ -308,13 +359,24 @@ export function HiringTeamTab() {
                                         >
                                            <Eye size={12}/> View
                                         </button>
-                                        {['Pending', 'Offer Accepted', 'Validating Documents'].includes(c.status) && (
-                                          <button 
-                                             onClick={() => dispatch({ type: 'REJECT_PRE_DOC', payload: { candidateId: c.id, docId } })}
-                                             className="text-xs border border-red-200 bg-white text-red-600 hover:bg-red-50 font-medium w-full text-center py-1.5 rounded"
-                                          >
-                                             Reject
-                                          </button>
+                                        {doc.status === 'Needs Review' && (
+                                          <>
+                                            <button 
+                                               onClick={() => {
+                                                  dispatch({ type: 'SET_DOC_STATUS', payload: { candidateId: c.id, docId, status: 'Uploaded' } });
+                                                  resumeAgent(c.id, docId);
+                                               }}
+                                               className="text-xs border border-green-200 bg-white text-green-600 hover:bg-green-50 font-medium w-full text-center py-1.5 rounded"
+                                            >
+                                               Pass
+                                            </button>
+                                            <button 
+                                               onClick={() => dispatch({ type: 'REJECT_PRE_DOC', payload: { candidateId: c.id, docId } })}
+                                               className="text-xs border border-red-200 bg-white text-red-600 hover:bg-red-50 font-medium w-full text-center py-1.5 rounded"
+                                            >
+                                               Reject (Re-upload)
+                                            </button>
+                                          </>
                                         )}
                                      </div>
                                    )}

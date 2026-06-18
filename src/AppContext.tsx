@@ -82,6 +82,8 @@ type Action =
   | { type: 'ACCEPT_OFFER'; payload: { candidateId: CandidateId } }
   | { type: 'UPLOAD_PRE_DOC'; payload: { candidateId: CandidateId; docId: string } }
   | { type: 'REJECT_PRE_DOC'; payload: { candidateId: CandidateId; docId: string } }
+  | { type: 'SET_DOC_STATUS'; payload: { candidateId: CandidateId; docId: string; status: 'Pending' | 'Uploaded' | 'Rejected' | 'Needs Review' } }
+  | { type: 'SET_DOCS_FLAGGED'; payload: { candidateId: CandidateId; flagged: boolean } }
   | { type: 'COMPLETE_POST_TASK'; payload: { candidateId: CandidateId; taskId: string } }
   | { type: 'SET_STATUS'; payload: { candidateId: CandidateId; status: any } }
   | { type: 'TRIGGER_LOCALIZATION' }
@@ -198,6 +200,41 @@ function reducer(state: AppState, action: Action): AppState {
           }
         },
         activityLog: logEvent(state, 'Hiring Team', `Rejected document: ${docId} for ${state.candidates[candidateId].name}`),
+      };
+    }
+
+    case 'SET_DOC_STATUS': {
+      const { candidateId, docId, status } = action.payload;
+      return {
+        ...state,
+        candidates: {
+          ...state.candidates,
+          [candidateId]: {
+            ...state.candidates[candidateId],
+            preOnboardingDocs: {
+              ...state.candidates[candidateId].preOnboardingDocs,
+              [docId]: {
+                ...state.candidates[candidateId].preOnboardingDocs[docId],
+                status
+              }
+            }
+          }
+        },
+        activityLog: logEvent(state, 'System', `Document ${docId} status set to ${status} for ${state.candidates[candidateId].name}`),
+      };
+    }
+
+    case 'SET_DOCS_FLAGGED': {
+      const { candidateId, flagged } = action.payload;
+      return {
+        ...state,
+        candidates: {
+          ...state.candidates,
+          [candidateId]: {
+            ...state.candidates[candidateId],
+            docsFlagged: flagged
+          }
+        }
       };
     }
 
