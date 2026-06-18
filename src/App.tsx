@@ -1,7 +1,6 @@
 import React from 'react';
 import { AppProvider, useAppContext } from './AppContext';
 import { DemoController } from './components/DemoController';
-import { ActivityLog } from './components/ActivityLog';
 import { AmelieTab } from './components/AmelieTab';
 import { StefanTab } from './components/StefanTab';
 import { HiringTeamTab } from './components/HiringTeamTab';
@@ -60,11 +59,6 @@ function AppContent() {
           {state.activeTab === 'specialist' && <SpecialistTab />}
           {state.activeTab === 'executive' && <ExecutiveTab />}
         </div>
-        
-        {/* Only show Activity log over enterprise views to avoid cluttering mobile views */}
-        {['hiring', 'council', 'manager', 'specialist', 'executive'].includes(state.activeTab) && (
-          <ActivityLog />
-        )}
       </main>
     </div>
   );
