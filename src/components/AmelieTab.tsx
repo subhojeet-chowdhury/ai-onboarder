@@ -24,6 +24,8 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
+import { getDummyDocText } from '../utils';
+
 export function AmelieTab() {
   const { state, dispatch } = useAppContext();
   const c = state.candidates.amelie;
@@ -810,24 +812,20 @@ export function AmelieTab() {
                 >
                   {!isUploading ? (
                     <>
-                      <div className="w-full aspect-square bg-gray-50 rounded-xl mb-4 flex items-center justify-center border-2 border-dashed border-gray-300 relative overflow-hidden group hover:bg-gray-100 transition">
-                        <Upload
-                          size={48}
-                          className="text-gray-400 group-hover:scale-110 transition-transform"
-                        />
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/5 opacity-0 group-hover:opacity-100 transition"></div>
+                      <div className="w-full h-64 overflow-y-auto bg-white rounded-xl mb-4 text-left border border-gray-200 shadow-sm relative group transition">
+                        {activeUploadDocId ? getDummyDocText(c.preOnboardingDocs?.[activeUploadDocId]?.label || '') : null}
                       </div>
                       <h3 className="font-semibold text-gray-800 mb-2">
-                        Télécharger le document
+                        Soumettre le document
                       </h3>
                       <p className="text-xs text-gray-500 mb-6 text-center">
-                        Veuillez vous assurer que le document ({c.preOnboardingDocs?.[activeUploadDocId || '']?.label || 'médicaux'}) est bien scanné.
+                        Veuillez vous assurer que le document ({c.preOnboardingDocs?.[activeUploadDocId || '']?.label || 'médicaux'}) est bien lisible.
                       </p>
                       <button
                         onClick={handleConfirmUpload}
                         className="w-full bg-[#C74634] text-white py-3 rounded-xl font-medium shadow-sm hover:bg-red-800 active:scale-95 transition flex items-center justify-center gap-2"
                       >
-                        <Upload size={20} /> Télécharger & Analyser
+                        <Upload size={20} /> Soumettre & Analyser
                       </button>
                     </>
                   ) : (
@@ -886,12 +884,8 @@ export function AmelieTab() {
                 >
                   {!isUploading ? (
                     <>
-                      <div className="w-full aspect-square bg-gray-50 rounded-xl mb-4 flex items-center justify-center border-2 border-dashed border-gray-300 relative overflow-hidden group hover:bg-gray-100 transition">
-                        <Camera
-                          size={48}
-                          className="text-gray-400 group-hover:scale-110 transition-transform"
-                        />
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/5 opacity-0 group-hover:opacity-100 transition"></div>
+                      <div className="w-48 h-48 bg-gray-200 rounded-full border-4 border-gray-300 shadow-inner flex items-center justify-center overflow-hidden mx-auto my-6">
+                         <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=256&h=256&auto=format&fit=crop" alt="Profile" className="w-full h-full object-cover" />
                       </div>
                       <h3 className="font-semibold text-gray-800 mb-2">
                         Prendre une photo de badge
