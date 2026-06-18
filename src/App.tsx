@@ -7,8 +7,9 @@ import { StefanTab } from './components/StefanTab';
 import { HiringTeamTab } from './components/HiringTeamTab';
 import { WorksCouncilTab } from './components/WorksCouncilTab';
 import { ManagerTab } from './components/ManagerTab';
-import { AdminTab } from './components/AdminTab';
-import { Smartphone, LayoutDashboard, FileSignature, LogOut, CheckCircle2 } from 'lucide-react';
+import { SpecialistTab } from './components/SpecialistTab';
+import { ExecutiveTab } from './components/ExecutiveTab';
+import { Smartphone, LayoutDashboard, FileSignature, LogOut, CheckCircle2, TrendingUp, Inbox } from 'lucide-react';
 
 const TABS = [
   { id: 'amelie', label: 'Amélie Laurent (FR)', icon: <Smartphone size={16}/> },
@@ -16,7 +17,8 @@ const TABS = [
   { id: 'hiring', label: 'Hiring Team', icon: <LayoutDashboard size={16}/> },
   { id: 'council', label: 'Works Council', icon: <FileSignature size={16}/> },
   { id: 'manager', label: 'Manager (Dupont)', icon: <CheckCircle2 size={16}/> },
-  { id: 'admin', label: 'Admin Workspace', icon: <LayoutDashboard size={16}/> },
+  { id: 'specialist', label: 'Specialist Workbench', icon: <Inbox size={16}/> },
+  { id: 'executive', label: 'Executive Analytics', icon: <TrendingUp size={16}/> },
 ];
 
 function AppContent() {
@@ -55,11 +57,12 @@ function AppContent() {
           {state.activeTab === 'hiring' && <HiringTeamTab />}
           {state.activeTab === 'council' && <WorksCouncilTab />}
           {state.activeTab === 'manager' && <ManagerTab />}
-          {state.activeTab === 'admin' && <AdminTab />}
+          {state.activeTab === 'specialist' && <SpecialistTab />}
+          {state.activeTab === 'executive' && <ExecutiveTab />}
         </div>
         
         {/* Only show Activity log over enterprise views to avoid cluttering mobile views */}
-        {['hiring', 'council', 'manager', 'admin'].includes(state.activeTab) && (
+        {['hiring', 'council', 'manager', 'specialist', 'executive'].includes(state.activeTab) && (
           <ActivityLog />
         )}
       </main>

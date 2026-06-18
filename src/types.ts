@@ -29,6 +29,7 @@ export interface Candidate {
   isAuthenticated: boolean;
   uniformSigned: boolean;
   videoWatched: boolean;
+  photoUploaded: boolean;
 }
 
 export interface ChatMessage {

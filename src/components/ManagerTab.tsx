@@ -11,7 +11,7 @@ export function ManagerTab() {
     dispatch({ type: 'APPROVE_BADGE', payload: { candidateId: 'amelie' } });
   };
 
-  const showBadgeCard = c.status === 'Active Employee' && c.documentVerified && !c.badgeApproved;
+  const showBadgeCard = c.status === 'Active Employee' && c.documentVerified && c.photoUploaded && !c.badgeApproved;
   
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">
@@ -29,13 +29,13 @@ export function ManagerTab() {
               <div className="flex-1 space-y-2">
                  <div className="flex justify-between text-sm">
                    <span className="font-medium text-gray-700">Amélie Laurent</span>
-                   <span className="font-medium text-blue-600">{showBadgeCard ? '75%' : c.badgeApproved ? '100%' : c.status === 'Active Employee' ? '33%' : '0%'}</span>
+                   <span className="font-medium text-blue-600">{showBadgeCard ? '80%' : c.badgeApproved ? '100%' : c.status === 'Active Employee' ? '40%' : '0%'}</span>
                  </div>
                  <div className="w-full bg-gray-100 h-3 rounded-full overflow-hidden">
                     <motion.div 
                       className="bg-blue-600 h-full" 
                       initial={{ width: 0 }}
-                      animate={{ width: showBadgeCard ? '75%' : c.badgeApproved ? '100%' : c.status === 'Active Employee' ? '33%' : '0%' }}
+                      animate={{ width: showBadgeCard ? '80%' : c.badgeApproved ? '100%' : c.status === 'Active Employee' ? '40%' : '0%' }}
                       transition={{ duration: 1 }}
                     />
                  </div>
@@ -68,8 +68,8 @@ export function ManagerTab() {
       <div className="space-y-4 mb-8">
         <h3 className="font-semibold text-gray-800 flex items-center gap-2"><Users size={18}/> Detailed Team Status</h3>
         <div className="grid grid-cols-2 gap-6">
-          {Object.values(state.candidates).map(cand => {
-             const velocity = cand.id === 'amelie' ? (showBadgeCard ? 75 : cand.badgeApproved ? 100 : cand.status === 'Active Employee' ? 33 : 0) : (cand.status === 'Cleared' ? 10 : 0);
+          {(Object.values(state.candidates) as any[]).map(cand => {
+             const velocity = cand.id === 'amelie' ? (showBadgeCard ? 80 : cand.badgeApproved ? 100 : cand.status === 'Active Employee' ? 40 : 0) : (cand.status === 'Cleared' ? 10 : 0);
              return (
                <div key={cand.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
                  <div className="flex justify-between items-center bg-gray-50 p-4 border-b border-gray-200">
@@ -80,7 +80,7 @@ export function ManagerTab() {
                    <div className="text-sm font-medium text-[#C74634] bg-red-50 px-2 py-1 rounded">{velocity}% Complete</div>
                  </div>
                  <div className="p-4 bg-white">
-                    <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Onboarding Prerequisites</h4>
+                     <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Onboarding Prerequisites</h4>
                     <ul className="text-sm space-y-3">
                       <li className="flex gap-3"> 
                         {cand.day1Activated ? <CheckCircle size={18} className="text-green-500"/> : <Clock size={18} className="text-gray-300"/>} 
@@ -89,6 +89,10 @@ export function ManagerTab() {
                       <li className="flex gap-3"> 
                         {cand.documentVerified ? <CheckCircle size={18} className="text-green-500"/> : <Clock size={18} className="text-gray-300"/>} 
                         <span className={cand.documentVerified ? "text-gray-800" : "text-gray-500"}>Verified Medical Clearance Certificate</span>
+                      </li>
+                      <li className="flex gap-3"> 
+                        {cand.photoUploaded ? <CheckCircle size={18} className="text-green-500"/> : <Clock size={18} className="text-gray-300"/>} 
+                        <span className={cand.photoUploaded ? "text-gray-800" : "text-gray-500"}>ID Photo Uploaded</span>
                       </li>
                       <li className="flex gap-3"> 
                         {cand.badgeApproved ? <CheckCircle size={18} className="text-green-500"/> : <Clock size={18} className="text-gray-300"/>} 
@@ -109,12 +113,14 @@ export function ManagerTab() {
             className="bg-white border border-blue-200 rounded-xl shadow-lg p-6 flex items-center justify-between"
           >
             <div className="flex items-center gap-4">
-              <div className="bg-blue-50 p-4 rounded-full">
-                 <BadgeCheck className="text-blue-600" size={32} />
+              <div className="bg-blue-50 w-16 h-16 rounded-full overflow-hidden flex items-center justify-center border-2 border-blue-200">
+                 <img src="https://i.pravatar.cc/150?u=a042581f4e29" alt="Amélie" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
               </div>
               <div>
-                 <h2 className="text-lg font-semibold text-gray-800">Action Required: Approve Cleanroom Badge</h2>
-                 <p className="text-gray-600">Amélie Laurent has completed all prerequisites (75% overall).</p>
+                 <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                   Action Required: Approve Cleanroom Badge <BadgeCheck className="text-blue-600" size={20} />
+                 </h2>
+                 <p className="text-gray-600">Amélie Laurent has completed all prerequisites (80% overall). Verification photo attached.</p>
               </div>
             </div>
             <button 

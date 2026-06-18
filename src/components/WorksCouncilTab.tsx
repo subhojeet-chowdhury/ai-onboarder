@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAppContext } from '../AppContext';
-import { Check, Info, ShieldAlert } from 'lucide-react';
+import { ShieldAlert } from 'lucide-react';
 
 export function WorksCouncilTab() {
   const { state, dispatch } = useAppContext();
@@ -10,42 +10,15 @@ export function WorksCouncilTab() {
   };
 
   const deQueue = state.councilQueue.de;
-  const ameliaStatus = state.candidates.amelie.status;
 
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-6">
+    <div className="p-6 max-w-4xl mx-auto space-y-6">
       <div className="mb-6 border-b border-gray-200 pb-4">
          <h1 className="text-2xl font-semibold text-gray-800 tracking-tight">Works Council Gateways</h1>
          <p className="text-sm text-gray-500 mt-1">Regional compliance interfaces dynamically driven by AI Localization.</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-8">
-        {/* French CSE */}
-        <div className="bg-white border border-gray-200 rounded-lg shadow-sm flex flex-col">
-          <div className="bg-slate-50 border-b border-gray-200 p-4">
-             <h2 className="font-semibold text-gray-800 flex items-center gap-2">
-               <Info className="text-blue-500" size={18} />
-               Comité Social et Économique (FR)
-             </h2>
-             <p className="text-xs text-gray-500 mt-1">Notification tracking only. No approval needed.</p>
-          </div>
-          <div className="p-4 flex-1">
-             {(ameliaStatus === 'Cleared' || ameliaStatus === 'Active Employee') ? (
-               <div className="bg-green-50 border border-green-200 p-3 rounded-md text-sm text-green-800 flex gap-3">
-                 <Check size={18} className="mt-0.5" />
-                 <div>
-                    <strong>Category Logged:</strong> Laboratory Technician (Amélie Laurent). 
-                    <br/>Data successfully synced to regional CSE portal. CDI contract automatically approved for delivery.
-                 </div>
-               </div>
-             ) : (
-                <div className="text-sm text-gray-400 italic text-center py-8">
-                  Waiting for accepted French offers...
-                </div>
-             )}
-          </div>
-        </div>
-
+      <div className="grid grid-cols-1 gap-8">
         {/* German Betriebsrat */}
         <div className="bg-white border border-gray-200 rounded-lg shadow-sm flex flex-col items-stretch">
           <div className="bg-slate-50 border-b border-gray-200 p-4">

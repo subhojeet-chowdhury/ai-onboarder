@@ -31,6 +31,7 @@ const INITIAL_STATE: AppState = {
       isAuthenticated: false,
       uniformSigned: false,
       videoWatched: false,
+      photoUploaded: false,
     },
     stefan: {
       id: 'stefan',
@@ -54,6 +55,7 @@ const INITIAL_STATE: AppState = {
       isAuthenticated: false,
       uniformSigned: false,
       videoWatched: false,
+      photoUploaded: false,
     },
   },
   councilQueue: { de: [] },
@@ -76,6 +78,7 @@ type Action =
   | { type: 'WATCH_VIDEO'; payload: { candidateId: CandidateId } }
   | { type: 'ACTIVATE_DAY_1' }
   | { type: 'UPLOAD_DOCUMENT'; payload: { candidateId: CandidateId } }
+  | { type: 'UPLOAD_PHOTO'; payload: { candidateId: CandidateId } }
   | { type: 'APPROVE_BADGE'; payload: { candidateId: CandidateId } }
   | { type: 'SUBMIT_CHAT'; payload: { candidateId: CandidateId; text: string; response?: string } }
   | { type: 'ESCALATE_TICKET'; payload: { candidateId: CandidateId } }
@@ -203,6 +206,21 @@ function reducer(state: AppState, action: Action): AppState {
           },
         },
         activityLog: logEvent(state, 'Oracle Verification AI', `OCR validated medical doc for ${state.candidates[candidateId].name}.`),
+      };
+    }
+
+    case 'UPLOAD_PHOTO': {
+      const { candidateId } = action.payload;
+      return {
+        ...state,
+        candidates: {
+          ...state.candidates,
+          [candidateId]: {
+            ...state.candidates[candidateId],
+            photoUploaded: true,
+          },
+        },
+        activityLog: logEvent(state, state.candidates[candidateId].name, `Uploaded photo for badge.`),
       };
     }
 

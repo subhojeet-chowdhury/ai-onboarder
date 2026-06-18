@@ -1,15 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAppContext } from '../AppContext';
 import { motion } from 'motion/react';
-import { Users, SplitSquareHorizontal, ShieldAlert, FileCheck2, ChevronDown, ChevronRight, FileText } from 'lucide-react';
-import { useState } from 'react';
+import { Users, SplitSquareHorizontal, ShieldAlert, FileCheck2, ChevronDown, ChevronRight, FileText, Loader2 } from 'lucide-react';
 
 export function HiringTeamTab() {
   const { state, dispatch } = useAppContext();
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
+  const [isLocalizing, setIsLocalizing] = useState(false);
 
   const handleTriggerLocalization = () => {
-    dispatch({ type: 'TRIGGER_LOCALIZATION' });
+    setIsLocalizing(true);
+    setTimeout(() => {
+      dispatch({ type: 'TRIGGER_LOCALIZATION' });
+      setIsLocalizing(false);
+    }, 2500);
   };
 
   const getStatusBadge = (status: string) => {
@@ -17,13 +21,13 @@ export function HiringTeamTab() {
       case 'Pending': return <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-medium border border-gray-200">Pending</span>;
       case 'Offer Accepted': return <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium border border-blue-200">Offer Accepted</span>;
       case 'Pending Council': return <span className="bg-amber-100 text-amber-800 px-2 py-1 rounded text-xs font-medium border border-amber-200">Pending Council (DE)</span>;
-      case 'Cleared': return <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium border border-green-200">Cleared / CDI Generated</span>;
+      case 'Cleared': return <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium border border-green-200">Cleared / Generated</span>;
       case 'Active Employee': return <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs font-medium border border-purple-200">Active Employee</span>;
       default: return null;
     }
   };
 
-  const candidates = Object.values(state.candidates);
+  const candidates = Object.values(state.candidates) as any[];
   const anyOffersAccepted = candidates.some(c => c.status === 'Offer Accepted');
 
   return (
@@ -39,10 +43,11 @@ export function HiringTeamTab() {
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             onClick={handleTriggerLocalization}
-            className="flex items-center gap-2 bg-[#C74634] text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-red-800 transition"
+            disabled={isLocalizing}
+            className="flex items-center gap-2 bg-[#C74634] text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-red-800 transition disabled:opacity-75 disabled:cursor-not-allowed"
           >
-            <SplitSquareHorizontal size={16} />
-            Run Localization Agent
+            {isLocalizing ? <Loader2 size={16} className="animate-spin" /> : <SplitSquareHorizontal size={16} />}
+            {isLocalizing ? 'Running Agent...' : 'Run Localization Agent'}
           </motion.button>
         )}
       </div>
@@ -105,7 +110,12 @@ export function HiringTeamTab() {
                             <div className="flex justify-between"><span className="text-gray-500">Day 1 Activated:</span> <span className="font-medium">{c.day1Activated ? 'Yes' : 'Pending'}</span></div>
                             <div className="flex justify-between"><span className="text-gray-500">Medical Document:</span> <span className="font-medium">{c.documentVerified ? 'Validated (OCR)' : 'Missing'}</span></div>
                             <div className="flex justify-between"><span className="text-gray-500">Security Badge:</span> <span className="font-medium">{c.badgeApproved ? 'Approved' : 'Pending'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">Works Council Check:</span> <span className="font-medium">{c.country === 'FR' ? 'N/A (Notified)' : c.status === 'Cleared' ? 'Approved' : 'Pending Review'}</span></div>
+                            {c.country === 'DE' && (
+                              <div className="flex justify-between">
+                                <span className="text-gray-500">Works Council Check:</span> 
+                                <span className="font-medium">{c.status === 'Cleared' ? 'Approved' : 'Pending Review'}</span>
+                              </div>
+                            )}
                           </div>
                         </div>
 
@@ -123,10 +133,10 @@ export function HiringTeamTab() {
          <div className="bg-white p-5 border border-gray-200 rounded-lg shadow-sm">
             <div className="flex items-center gap-2 text-gray-800 font-semibold mb-3">
                <FileCheck2 className="text-blue-600" size={20} />
-               French Pipeline (CSE)
+               French Pipeline
             </div>
             <p className="text-sm text-gray-600 leading-relaxed">
-              In France, the Comité Social et Économique (CSE) requires structural category tracking, but does not block contract generation. AI automatically generates the Contrat à Durée Indéterminée (CDI).
+              AI automatically generates the Contrat à Durée Indéterminée (CDI) directly since no pre-clearance is required for this standard transaction.
             </p>
          </div>
          
@@ -143,3 +153,4 @@ export function HiringTeamTab() {
     </div>
   );
 }
+
